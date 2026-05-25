@@ -1,4 +1,5 @@
 from inference_sdk import InferenceHTTPClient
+import streamlit as st # Añadimos streamlit para imprimir en pantalla
 
 CLIENT = InferenceHTTPClient(
     api_url="https://detect.roboflow.com", 
@@ -11,15 +12,20 @@ def detectar_blister(imagen_input):
     imagen_input puede ser la ruta (str) o el objeto de archivo de Streamlit.
     """
     try:
-        # Roboflow es inteligente, si le pasas la ruta, la procesa.
         res = CLIENT.infer(imagen_input, model_id=MODELO_ID)
         
-        # Validación de seguridad: verificamos si hay predicciones
+        # --- RAYOS X: MOSTRAR QUÉ DETECTA LA IA ---
+        if 'predictions' in res:
+            st.warning("Diagnóstico de la IA (Rayos X):")
+            st.json(res['predictions']) # Esto imprimirá los datos crudos en tu pantalla
+        # ------------------------------------------
+        
         if 'predictions' not in res:
             return 0
             
+        # Revisa si el nombre de la clase es 'alveolo_vacio' u otro
         vacios = sum(1 for p in res['predictions'] if p['class'] == 'alveolo_vacio')
         return vacios
     except Exception as e:
-        print(f"Error en la IA: {e}")
+        st.error(f"Error interno en la conexión con la IA: {e}")
         return 0
